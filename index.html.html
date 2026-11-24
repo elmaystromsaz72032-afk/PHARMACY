@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>خروج ودخول الموظفين</title>
+<style>
+  :root{--navy:#1f3864;--green:#2e7d32;--orange:#d9822b;--bg:#f2f5fa;--card:#fff;--text:#1b2433;--muted:#667085;--red:#c62828}
+  @media (prefers-color-scheme: dark){:root{--bg:#10151f;--card:#1a2232;--text:#eef2f8;--muted:#9aa7bd}}
+  *{box-sizing:border-box} body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .hidden{display:none!important}
+  /* ---------- صفحة الموظف ---------- */
+  #emp{display:flex;justify-content:center;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+  .wrap{width:100%;max-width:420px;padding:24px 0}
+  .logo{text-align:center;margin-bottom:18px} .logo h1{margin:0;font-size:22px;color:var(--navy)}
+  @media (prefers-color-scheme: dark){.logo h1{color:#9db8f0}}
+  .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
+  label{display:block;font-size:14px;color:var(--muted);margin:14px 0 6px}
+  select,input{width:100%;font-size:18px;padding:14px;border-radius:12px;border:1.5px solid #c9d2e0;background:var(--card);color:var(--text);font-family:inherit}
+  input.pin{letter-spacing:8px;text-align:center}
+  button{width:100%;margin-top:18px;padding:18px;font-size:20px;font-weight:700;border:0;border-radius:14px;color:#fff;background:var(--navy);font-family:inherit;cursor:pointer}
+  button:disabled{opacity:.55} button.exit{background:var(--orange)} button.entry{background:var(--green)} button.ghost{background:transparent;color:var(--muted);font-size:16px;font-weight:400;margin-top:8px}
+  .state{text-align:center;padding:14px;border-radius:14px;font-size:20px;font-weight:700;margin-top:6px}
+  .state.in{background:#e8f5e9;color:var(--green)} .state.out{background:#fff3e0;color:#b25e00}
+  .hello{text-align:center;font-size:18px;margin:4px 0 12px}
+  .msg{margin-top:14px;padding:12px;border-radius:12px;text-align:center;font-size:16px}
+  .msg.err{background:#fdecea;color:var(--red)} .msg.ok{background:#e8f5e9;color:var(--green)}
+  .small{color:var(--muted);font-size:13px;text-align:center;margin-top:16px}
+  /* ---------- لوحة المدير ---------- */
+  header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  header h1{margin:0;font-size:20px} header small{opacity:.9}
+  main{padding:16px;max-width:1280px;margin:auto}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border-radius:12px;padding:14px;text-align:center;box-shadow:0 1px 8px rgba(0,0,0,.07)}
+  .kpi b{display:block;font-size:28px;margin-top:4px} .kpi span{font-size:13px;color:var(--muted)}
+  h2{font-size:17px;margin:18px 0 8px}
+  .tbl{background:var(--card);border-radius:12px;overflow:auto;box-shadow:0 1px 8px rgba(0,0,0,.07)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px} th{background:var(--navy);color:#fff;padding:10px;text-align:center}
+  td{padding:9px 10px;text-align:center;border-bottom:1px solid rgba(128,128,128,.18)} td.name{text-align:right}
+  tr.green td{background:#e6f4e8;color:#1b5e20} tr.yellow td{background:#fff6cf;color:#7a5b00} tr.red td{background:#fde0e0;color:#8e1b1b}
+  tr.grey td{background:#e3e3e3;color:#555} td.out{background:#f8b980!important;color:#4a2500!important;font-weight:700} tr.inactive td{opacity:.5}
+  #adminLogin{max-width:340px;margin:12vh auto;background:var(--card);padding:24px;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.1)}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#2e7d32;margin-left:6px} .dot.off{background:#c62828}
+  a{color:inherit}
+</style>
+</head>
+<body>
+
+<!-- ===================== صفحة الموظف ===================== -->
+<div id="emp">
+  <div class="wrap">
+    <div class="logo"><h1 id="pharmacy"></h1></div>
+    <div class="card">
+      <div id="login">
+        <label for="empSel">اختر اسمك</label>
+        <select id="empSel"><option value="">جارٍ التحميل…</option></select>
+        <label for="pin">الرقم السري</label>
+        <input id="pin" class="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="••••••">
+        <button id="go">دخول</button>
+      </div>
+      <div id="panel" class="hidden">
+        <div class="hello" id="hello"></div>
+        <div class="state" id="state"></div>
+        <button id="act"></button>
+        <button class="ghost" id="back">تغيير الموظف</button>
+      </div>
+      <div id="msg" class="msg hidden"></div>
+    </div>
+    <div class="small">يُسجَّل الوقت تلقائياً من الخادم ولا يمكن تعديله.</div>
+  </div>
+</div>
+
+<!-- ===================== لوحة المدير (الرابط + #admin) ===================== -->
+<div id="adm" class="hidden">
+  <div id="adminLogin">
+    <h2 style="margin-top:0">لوحة المدير</h2>
+    <input id="mpass" type="password" placeholder="كلمة مرور المدير" autocomplete="current-password" style="margin-bottom:12px">
+    <button id="mgo" style="margin-top:0">دخول</button>
+    <div id="mmsg" class="msg err hidden"></div>
+  </div>
+  <div id="dash" class="hidden">
+    <header><h1>لوحة متابعة خروج ودخول الموظفين</h1>
+      <small><span class="dot" id="live"></span><span id="liveTxt">مباشر</span> · آخر تحديث <span id="upd">—</span> · <a href="#" id="mout">خروج</a></small></header>
+    <main>
+      <div class="kpis">
+        <div class="kpi"><span>الموظفون النشطون</span><b id="k_total">0</b></div>
+        <div class="kpi"><span>داخل الفرع</span><b id="k_in" style="color:#2e7d32">0</b></div>
+        <div class="kpi"><span>خارج الفرع الآن</span><b id="k_out" style="color:#d9822b">0</b></div>
+        <div class="kpi"><span>إجمالي دقائق اليوم</span><b id="k_min">0</b></div>
+        <div class="kpi"><span>متجاوزون للحد اليوم</span><b id="k_over" style="color:#c62828">0</b></div>
+        <div class="kpi"><span>دقائق التجاوز اليوم</span><b id="k_overmin" style="color:#c62828">0</b></div>
+      </div>
+      <h2>حالة الموظفين اليوم (بتوقيت القاهرة)</h2>
+      <div class="tbl"><table><thead><tr><th>الموظف</th><th>القسم</th><th>الحالة</th><th>عدّاد الخروج الحالي</th><th>مرات الخروج</th><th>المستهلك (د:ث)</th><th>المتبقي (د)</th><th>التجاوز (د)</th></tr></thead><tbody id="rows"></tbody></table></div>
+      <h2>سجل حركة اليوم</h2>
+      <div class="tbl"><table><thead><tr><th>الموظف</th><th>الخروج</th><th>العودة</th><th>المدة (د:ث)</th><th>الحالة</th></tr></thead><tbody id="log"></tbody></table></div>
+      <h2>إحصائيات آخر 30 يوماً لكل موظف</h2>
+      <div class="tbl"><table><thead><tr><th>الموظف</th><th>أيام فيها خروج</th><th>إجمالي الدقائق</th><th>متوسط الدقائق/يوم</th><th>أيام التجاوز</th><th>نسبة الالتزام</th></tr></thead><tbody id="hist"></tbody></table></div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ================= الإعداد: يُعبَّأ مرة واحدة =================
+const SUPABASE_URL = "https://fgwropjvzoftriihirlk.supabase.co";
+const ANON_KEY     = "sb_publishable_F8TngpbYEjm653-ghc_RiA_2np6X6Z5";   // مفتاح عام (anon) — مسموح وجوده هنا. لا تضع أبداً service_role
+const PHARMACY     = "صيدليات اللواء الطبي";
+// =============================================================
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mmss = s => { s = Math.max(0, Math.floor(s)); return String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0"); };
+async function rpc(name, body){
+  try{
+    const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + name, {method:"POST", headers:Object.assign({"Content-Type":"application/json", apikey:ANON_KEY}, ANON_KEY.startsWith("eyJ") ? {Authorization:"Bearer " + ANON_KEY} : {}), body:JSON.stringify(body || {})});
+    if(!r.ok) return {ok:false, error:"server"};
+    return await r.json();
+  }catch(e){ return {ok:false, error:"network"}; }
+}
+$("pharmacy").textContent = PHARMACY;
+const ERR = {bad_pin:"الرقم السري غير صحيح", locked:"تم إيقاف المحاولات مؤقتاً. حاول بعد 15 دقيقة أو راجع المدير", invalid:"بيانات غير صحيحة",
+  already_out:"أنت مسجَّل خارج الفرع بالفعل", not_out:"لا يوجد خروج مفتوح لتسجيل عودة", bad_request:"تحقق من البيانات", server:"حدث خطأ، حاول مرة أخرى", network:"لا يوجد اتصال بالإنترنت"};
+function route(){ const a = location.hash === "#admin"; $("emp").classList.toggle("hidden", a); $("adm").classList.toggle("hidden", !a); }
+window.addEventListener("hashchange", route); route();
+
+/* ---------------- الموظف ---------------- */
+const fmt = iso => new Intl.DateTimeFormat("ar-EG",{timeZone:"Africa/Cairo",hour:"2-digit",minute:"2-digit",hour12:true}).format(new Date(iso));
+function show(t, k){ const m=$("msg"); m.textContent=t; m.className="msg "+k; }
+function hideMsg(){ $("msg").className="msg hidden"; }
+let cur = {id:null, pin:null, state:null};
+(async()=>{
+  const r = await rpc("app_roster");
+  const s = $("empSel");
+  if(!Array.isArray(r)){ s.innerHTML='<option value="">تعذر تحميل القائمة</option>'; show(ERR[r.error]||ERR.server,"err"); return; }
+  s.innerHTML = '<option value="">— اختر —</option>' + r.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}</option>`).join("");
+})();
+function render(r){
+  $("login").classList.add("hidden"); $("panel").classList.remove("hidden");
+  $("hello").textContent = "أهلاً " + r.name;
+  const st=$("state"), b=$("act");
+  if(r.state==="out"){ st.className="state out"; st.textContent="أنت الآن خارج الفرع منذ " + fmt(r.since); b.textContent="رجوع للفرع"; b.className="entry"; }
+  else { st.className="state in"; st.textContent="أنت الآن داخل الفرع"; b.textContent="تسجيل خروج"; b.className="exit"; }
+  cur.state = r.state; b.disabled = false;
+}
+function reset(){ cur={id:null,pin:null,state:null}; $("pin").value=""; $("panel").classList.add("hidden"); $("login").classList.remove("hidden"); }
+const punch = (id,pin,action) => rpc("app_punch", {p_employee_id:id, p_pin:pin, p_action:action});
+$("go").onclick = async()=>{
+  hideMsg(); const id=$("empSel").value, pin=$("pin").value.trim();
+  if(!id || !/^\d{4,8}$/.test(pin)){ show("اختر اسمك وأدخل الرقم السري","err"); return; }
+  $("go").disabled=true; const r=await punch(id,pin,"status"); $("go").disabled=false;
+  if(!r.ok){ let t=ERR[r.error]||ERR.server; if(r.error==="bad_pin"&&r.remaining!=null) t+=` (متبقي ${r.remaining} محاولات)`; show(t,"err"); return; }
+  cur={id,pin,state:r.state}; render(r);
+};
+$("act").onclick = async()=>{
+  hideMsg(); $("act").disabled=true;
+  const action = cur.state==="out" ? "entry" : "exit";
+  const r = await punch(cur.id, cur.pin, action);
+  if(!r.ok){ show(ERR[r.error]||ERR.server,"err"); if(r.state) render(Object.assign({name:r.name||""},r)); $("act").disabled=false; return; }
+  let text;
+  if(action==="exit") text = "تم تسجيل الخروج الساعة " + fmt(r.since);
+  else text = `تم تسجيل الرجوع. مدة الخروج ${Math.floor(r.duration_seconds/60)} دقيقة و${r.duration_seconds%60} ثانية`;
+  reset(); show(text,"ok");
+};
+$("back").onclick = ()=>{ hideMsg(); reset(); };
+
+/* ---------------- المدير ---------------- */
+let pass = null, snap = null, skew = 0, tick = null, poll = null;
+async function load(){
+  const r = await rpc("admin_snapshot", {p_password: pass});
+  if(!r.ok){
+    if(r.error==="bad_password"||r.error==="locked"||r.error==="not_configured"){ logout(); const m=$("mmsg"); m.textContent = r.error==="locked" ? "محاولات كثيرة. انتظر 15 دقيقة" : r.error==="not_configured" ? "لم تُعيَّن كلمة مرور المدير بعد" : "كلمة المرور غير صحيحة"; m.classList.remove("hidden"); return false; }
+    $("live").className="dot off"; $("liveTxt").textContent="تعذر التحديث"; return false;
+  }
+  snap = r; skew = new Date(r.now) - Date.now();
+  $("live").className="dot"; $("liveTxt").textContent="مباشر";
+  $("upd").textContent = new Date().toLocaleTimeString("ar-EG",{timeZone:"Africa/Cairo"});
+  $("log").innerHTML = r.movements.map(m=>`<tr><td class="name">${esc(m.employee_name)}</td><td>${esc(m.exit_local)||""}</td><td>${esc(m.entry_local)||"—"}</td><td>${m.duration_seconds!=null?mmss(m.duration_seconds):"مفتوحة"}</td><td>${m.movement_status==="open"?"خارج الفرع":"مغلقة"}</td></tr>`).join("");
+  hist(); paint(); return true;
+}
+function hist(){
+  const by = {};
+  for(const h of snap.history){ const e = by[h.code] ||= {name:h.name, days:0, sec:0, over:0}; e.days++; e.sec += h.used_seconds; if(h.used_seconds > h.limit_minutes*60) e.over++; }
+  $("hist").innerHTML = Object.values(by).sort((a,b)=>b.sec-a.sec).map(e=>{
+    const pct = e.days ? Math.round(100*(1 - e.over/e.days)) : 100;
+    return `<tr class="${e.over? (pct<70?"red":"yellow") : "green"}"><td class="name">${esc(e.name)}</td><td>${e.days}</td><td>${Math.round(e.sec/60)}</td><td>${(e.sec/60/e.days).toFixed(1)}</td><td>${e.over}</td><td>${pct}%</td></tr>`;
+  }).join("") || '<tr><td colspan="6">لا توجد بيانات بعد</td></tr>';
+}
+function paint(){
+  if(!snap) return;
+  const now = Date.now() + skew; let tot=0, inn=0, out=0, min=0, over=0, overmin=0, html="";
+  for(const e of snap.today){
+    const lim = e.daily_limit_minutes*60, open = e.state==="out" ? (now - new Date(e.open_slice_start))/1000 : 0;
+    const used = e.closed_seconds + open, active = e.state!=="inactive";
+    if(active){ tot++; e.state==="out" ? out++ : inn++; min += used/60; if(used>lim){ over++; overmin += (used-lim)/60; } }
+    const cls = !active ? "inactive" : (e.exits_today===0 && e.state!=="out") ? "grey" : used>lim ? "red" : used>=45*60 ? "yellow" : "green";
+    const cell = e.state==="out" ? `<td class="out">خارج الفرع</td>` : `<td>${active?"داخل الفرع":"غير نشط"}</td>`;
+    html += `<tr class="${cls}"><td class="name">${esc(e.employee_name)}</td><td>${esc(e.department)}</td>${cell}<td>${e.state==="out"?mmss((now-new Date(e.out_since))/1000):"—"}</td><td>${e.exits_today}</td><td>${mmss(used)}</td><td>${Math.max(0,Math.ceil((lim-used)/60))}</td><td>${used>lim?Math.ceil((used-lim)/60):0}</td></tr>`;
+  }
+  $("rows").innerHTML = html;
+  $("k_total").textContent=tot; $("k_in").textContent=inn; $("k_out").textContent=out; $("k_min").textContent=Math.round(min); $("k_over").textContent=over; $("k_overmin").textContent=Math.round(overmin);
+}
+function logout(){ pass=null; snap=null; clearInterval(tick); clearInterval(poll); $("dash").classList.add("hidden"); $("adminLogin").classList.remove("hidden"); $("mpass").value=""; }
+$("mgo").onclick = async()=>{
+  $("mmsg").classList.add("hidden"); pass = $("mpass").value;
+  if(!pass) return;
+  $("mgo").disabled = true; const ok = await load(); $("mgo").disabled = false;
+  if(!ok) return;
+  $("adminLogin").classList.add("hidden"); $("dash").classList.remove("hidden");
+  tick = setInterval(paint, 1000); poll = setInterval(load, 10000);      // تحديث تلقائي كل 10 ثوانٍ
+};
+$("mpass").addEventListener("keydown", e=>{ if(e.key==="Enter") $("mgo").click(); });
+$("pin").addEventListener("keydown", e=>{ if(e.key==="Enter") $("go").click(); });
+$("mout").onclick = e=>{ e.preventDefault(); logout(); };
+</script>
+</body>
+</html>
